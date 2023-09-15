@@ -1,0 +1,105 @@
+import os
+import json
+import re
+import shutil
+
+def rename_file_main():
+    with open('./match_to_nc.json', 'r') as f:
+        rename_dict = json.load(f)
+    # dataset_dir_paths = ['./SortResults/Dos160/FC_Dos160']
+    dataset_dir_paths = [os.path.join('./SortResults/AAL116', x) for x in os.listdir('./SortResults/AAL116')]
+    rename_dict_keys = rename_dict.keys()
+    rename_dict_values = list(set(rename_dict.values()))
+    ret = re.compile("([^-]*)_(\d{7})_(\d{5}_\d_\d[^-]*)")
+    for dataset_dir_path in dataset_dir_paths:
+        c_count = 0
+        dirs = os.listdir(dataset_dir_path)
+        for dir_name in dirs:
+            eid = ret.match(dir_name).group(2)
+            base_dir_path = os.path.join(dataset_dir_path, dir_name)
+            if eid not in rename_dict_keys:
+                c_count += 1
+                print(base_dir_path)
+                os.remove(base_dir_path)
+        print(dataset_dir_path, c_count)
+    for dataset_dir_path in dataset_dir_paths:
+        count = 0
+        dirs = os.listdir(dataset_dir_path)
+        for dir_name in dirs:
+            eid = ret.match(dir_name).group(2)
+            base_dir_path = os.path.join(dataset_dir_path, dir_name)
+            if eid in rename_dict_keys:
+                eid_nc = rename_dict[eid]
+                final_dir_path = os.path.join(dataset_dir_path, dir_name.replace(eid, eid_nc))
+                
+                if os.path.exists(final_dir_path) == False:
+                    print(base_dir_path, final_dir_path)
+                    os.rename(base_dir_path, final_dir_path)
+                count += 1
+        print(dataset_dir_path, count)
+
+def rename_dir_main():
+    with open('./match_to_nc.json', 'r') as f:
+        rename_dict = json.load(f)
+    dataset_dir_paths = ['./FunImgARWSDCF']
+    rename_dict_keys = rename_dict.keys()
+    rename_dict_values = list(set(rename_dict.values()))
+    
+    for dataset_dir_path in dataset_dir_paths:
+        c_count = 0
+        dirs = os.listdir(dataset_dir_path)
+        for dir_name in dirs:
+            eid = dir_name.split('_')[0]
+            base_dir_path = os.path.join(dataset_dir_path, dir_name)
+            if eid not in rename_dict_keys:
+                c_count += 1
+                print(base_dir_path)
+                shutil.rmtree(base_dir_path)
+        print(dataset_dir_path, c_count)
+    for dataset_dir_path in dataset_dir_paths:
+        count = 0
+        dirs = os.listdir(dataset_dir_path)
+        for dir_name in dirs:
+            eid = dir_name.split('_')[0]
+            base_dir_path = os.path.join(dataset_dir_path, dir_name)
+            if eid in rename_dict_keys:
+                eid_nc = rename_dict[eid]
+                final_dir_path = os.path.join(dataset_dir_path, dir_name.replace(eid, eid_nc))
+                
+                if os.path.exists(final_dir_path) == False:
+                    print(base_dir_path, final_dir_path)
+                    os.rename(base_dir_path, final_dir_path)
+                count += 1
+        print(dataset_dir_path, count)
+
+    # print(count, c_count)
+
+def match_two_dir_and_save():
+    dir_1_path = './FunRawFinished_2'
+    dir1_files = set(os.listdir(dir_1_path))
+    ret = re.compile("([^-]*)_(\d{7}_\d{5}_\d_\d)([^-]*)")
+
+    dir2_paths = [os.path.join('./SortResults/AAL116', x) for x in os.listdir('./SortResults/AAL116')]
+    for dir_2_path in dir2_paths:
+        dir2_files = set(os.listdir(dir_2_path))
+
+        dir2_files_eids = set([ret.match(x).group(2) for x in list(dir2_files)])
+        both_have = list(dir1_files.intersection(dir2_files_eids))
+
+        print(len(both_have))
+        
+        dir2_files = list(dir2_files)
+        dir2_files_eids = list(dir2_files_eids)
+        for i in range(len(dir2_files)):
+            dir2_file = dir2_files[i]
+            dir2_file_eid = dir2_files_eids[i]
+            if dir2_file_eid not in both_have:
+                del_path = os.path.join(dir_2_path, dir2_file)
+                print(del_path)
+                os.remove(del_path)
+                # shutil.rmtree(del_path)
+
+if __name__ == "__main__":
+    # rename_file_main()
+    # match_two_dir_and_save()
+    pass
